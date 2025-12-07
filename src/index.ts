@@ -12,7 +12,8 @@ app.get("/", (req, res) => {
         status: 200,
         message: "Welcome API"
     })
-})
+});
 
+// testing
 
 export default app;
