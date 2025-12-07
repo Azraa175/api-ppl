@@ -6,35 +6,17 @@ import { Pagination } from "../utilities/Pagination";
 
 export const userService = {
   // GET all users
-  async getAllUsers(page: number, limit: number) {
-    const pagination = new Pagination(page, limit);
-
-    const count = await prisma.tb_user.count();
-
-    const rows = await prisma.tb_user.findMany({
-      skip: pagination.offset,
-      take: pagination.limit,
-      where: {
-        role: 'User'
-      },
+  async getAllUsers() {
+    return prisma.user.findMany({
       orderBy: {
-        id: "asc",
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        notelp: true,
-      },
-    });
-
-    return pagination.paginate({ count, rows });
+        id: 'asc'
+      }
+    })
   },
 
   // GET user by ID
   async getUserById(id: number) {
-    const user = await prisma.tb_user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id },
       select: {
         name: true,
@@ -50,7 +32,7 @@ export const userService = {
 
   // UPDATE user by ID
   async updateUserById(id: number, data: UserData) {
-    const existingUser = await prisma.tb_user.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: { id },
     });
 
@@ -58,7 +40,7 @@ export const userService = {
 
     //cek duplikat email
     if(data.email) {
-      const emailExist = await prisma.tb_user.findFirst({
+      const emailExist = await prisma.user.findFirst({
         where: {
           email: data.email,
           NOT: {
@@ -75,7 +57,7 @@ export const userService = {
       data.password = await bcrypt.hash(data.password, 10)
     }
 
-    return prisma.tb_user.update({
+    return prisma.user.update({
       where: { id },
       data,
     });
@@ -83,13 +65,13 @@ export const userService = {
 
   // DELETE user by ID
   async deleteUserById(id: number) {
-    const user = await prisma.tb_user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id },
     });
 
     if (!user) createError("id tidak ditemukan", 404);
 
-    return prisma.tb_user.delete({
+    return prisma.user.delete({
       where: { id },
     });
   },
