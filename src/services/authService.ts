@@ -11,7 +11,7 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
 
 export const authService = {
   async registerUser(data: AuthData) {
-    if (!data.name) throw createError("nama wajib diisi", 409);
+    if (!data.name) return createError("nama wajib diisi", 409);
     if (!data.email) throw createError("email wajib diisi", 400);
     if (!data.email.includes("@"))
       throw createError("format email tidak valid", 400);
