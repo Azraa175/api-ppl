@@ -2,7 +2,6 @@ import prisma from "../lib/prisma";
 import bcrypt from "bcryptjs";
 import { createError } from "../utilities/createError";
 import { UserData } from "../types/user";
-import { Pagination } from "../utilities/Pagination";
 
 export const userService = {
   // GET all users

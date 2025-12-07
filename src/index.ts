@@ -48,6 +48,5 @@ app.use("/api/auth", authRoute);
 // Public upload folder
 app.use("/uploads", express.static("public/uploads"));
 
-export default app;
 
-// total dest, kategori, pengguna, 
+export default app;
