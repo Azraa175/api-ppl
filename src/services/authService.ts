@@ -18,7 +18,7 @@ export const authService = {
     if (!data.password || data.password.length < 6)
       throw createError("password minimal 6 karakter", 400);
 
-    const existing = await prisma.tb_user.findUnique({
+    const existing = await prisma.user.findUnique({
       where: { email: data.email },
     });
 
@@ -48,7 +48,7 @@ export const authService = {
       { expiresIn: "1h" }
     );
 
-    await prisma.tb_accessToken.create({
+    await prisma.accessToken.create({
       data: {
         token: accessToken,
         tokenId: accessTokenId,
@@ -64,7 +64,7 @@ export const authService = {
       { expiresIn: "7d" }
     );
 
-    await prisma.tb_refreshToken.create({
+    await prisma.refreshToken.create({
       data: {
         token: refreshToken,
         tokenId: refreshTokenId,
@@ -77,15 +77,15 @@ export const authService = {
   },
 
   async loginUser(email: string, password: string) {
-    const user = await prisma.tb_user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user) throw createError("email tidak ditemukan", 404);
 
     const isMatch = await bcrypt.compare(password, user.password!);
     if (!isMatch) throw createError("password salah", 400);
 
     // hapus semua sisa token user
-    await prisma.tb_accessToken.deleteMany({ where: { userId: user.id } });
-    await prisma.tb_refreshToken.deleteMany({ where: { userId: user.id } });
+    await prisma.accessToken.deleteMany({ where: { userId: user.id } });
+    await prisma.refreshToken.deleteMany({ where: { userId: user.id } });
 
     // buat token baru
     const { accessToken, refreshToken } = await this.createTokens(user.id);
@@ -102,7 +102,7 @@ export const authService = {
       throw createError("refresh token tidak valid", 401);
     }
 
-    const stored = await prisma.tb_refreshToken.findUnique({
+    const stored = await prisma.refreshToken.findUnique({
       where: { tokenId: payload.tokenId },
     });
 
@@ -118,7 +118,7 @@ export const authService = {
       { expiresIn: "1h" }
     );
 
-    await prisma.tb_accessToken.create({
+    await prisma.accessToken.create({
       data: {
         token: newAccessToken,
         tokenId: newAccessTokenId,
@@ -135,9 +135,9 @@ export const authService = {
       const payload: any = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
 
       // hapus semua token milik user
-      await prisma.tb_accessToken.deleteMany({ where: { userId: payload.id } });
+      await prisma.accessToken.deleteMany({ where: { userId: payload.id } });
       
-      await prisma.tb_refreshToken.deleteMany({
+      await prisma.refreshToken.deleteMany({
         where: { userId: payload.id },
       });
     } catch {
@@ -154,10 +154,10 @@ export const authService = {
     const email = profile.emails[0].value;
     const name = profile.displayName;
 
-    let user = await prisma.tb_user.findUnique({ where: { email } });
+    let user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      user = await prisma.tb_user.create({
+      user = await prisma.user.create({
         data: {
           name,
           email,
@@ -177,13 +177,13 @@ export const authService = {
   async requestOtp(email: string) {
     if (!email) createError("email wajib diisi", 400);
 
-    const user = await prisma.tb_user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user) createError("email tidak ditemukan", 404);
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expires = new Date(Date.now() + 5 * 60 * 1000);
 
-    await prisma.tb_otp.create({
+    await prisma.otp.create({
       data: {
         email,
         otp,
@@ -203,7 +203,7 @@ export const authService = {
   async verifyOtp(email: string, otp: string) {
     if (!email || !otp) createError("email dan otp wajib diisi", 400);
 
-    const record = await prisma.tb_otp.findFirst({
+    const record = await prisma.otp.findFirst({
       where: { email, otp },
       orderBy: { createdAt: "desc" },
     });
@@ -211,7 +211,7 @@ export const authService = {
     if (!record) throw createError("OTP salah", 400);
     if (record.expiresAt < new Date()) throw createError("OTP kadaluarsa", 401);
 
-    await prisma.tb_otp.delete({ where: { id: record.id } });
+    await prisma.otp.delete({ where: { id: record.id } });
 
     return "OTP valid";
   },
@@ -222,7 +222,7 @@ export const authService = {
 
     const hash = await bcrypt.hash(newPassword, 10);
 
-    await prisma.tb_user.update({
+    await prisma.user.update({
       where: { email },
       data: { password: hash },
     });
